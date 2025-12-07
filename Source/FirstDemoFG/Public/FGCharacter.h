@@ -34,6 +34,9 @@ class FIRSTDEMOFG_API AFGCharacter : public ACharacter
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
+	UInputAction* FireAction;
 	
 
 public:
@@ -54,6 +57,11 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	void Fire(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void FireRayFromCameraCenter(float Distance = 10000.f, bool bDrawDebug = false);
 	
 	
 	// Called to bind functionality to input

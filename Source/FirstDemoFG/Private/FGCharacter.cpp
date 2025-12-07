@@ -78,7 +78,55 @@ void AFGCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(-LookAxisVector.Y);
+		
 	}
+}
+
+void AFGCharacter::Fire(const FInputActionValue& Value)
+{
+	FireRayFromCameraCenter(10000.f, true);
+}
+
+void AFGCharacter::FireRayFromCameraCenter(float Distance, bool bDrawDebug)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+
+	int32 ViewportX = 0, ViewportY = 0;
+	PC->GetViewportSize(ViewportX, ViewportY);
+	if (ViewportX == 0 || ViewportY == 0) return;
+
+	FVector WorldLocation;
+	FVector WorldDirection;
+	if (!PC->DeprojectScreenPositionToWorld(ViewportX * 0.5f, ViewportY * 0.5f, WorldLocation, WorldDirection))
+	{
+		return;
+	}
+
+	const FVector Start = WorldLocation;
+	const FVector End = Start + WorldDirection * Distance;
+
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params);
+
+	if (bDrawDebug)
+	{
+		DrawDebugLine(GetWorld(), Start, End, bHit ? FColor::Green : FColor::Red, false, 2.0f, 0, 1.0f);
+		if (bHit)
+		{
+			DrawDebugPoint(GetWorld(), Hit.ImpactPoint, 8.f, FColor::Yellow, false, 2.0f);
+		}
+	}
+
+	if (bHit && Hit.GetActor())
+	{
+		UE_LOG(LogTemp, Log, TEXT("FireRayFromCameraCenter hit: %s at %s"), *GetNameSafe(Hit.GetActor()), *Hit.ImpactPoint.ToString());
+		// İstediğiniz etkileşimi burada ekleyin.
+	}
+
 }
 
 
@@ -99,6 +147,12 @@ void AFGCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFGCharacter::Look);
+
+		// Fire action varsa bind et (FireAction varlığı projede tanımlanmış olmalı)
+		if (FireAction)
+		{
+			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &AFGCharacter::Fire);
+		}
 	}
 	else
 	{
